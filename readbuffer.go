@@ -22,6 +22,7 @@ type readBuffer struct {
 	buf                       bytes.Buffer
 	err                       error
 	backPressure              *backPressure
+	waiting                   int
 }
 
 func newReadBuffer(id int64, backPressure *backPressure) *readBuffer {
@@ -108,7 +109,11 @@ func (r *readBuffer) Read(b []byte) (int, error) {
 		if !r.deadline.IsZero() {
 			t = time.AfterFunc(r.deadline.Sub(now), func() { r.cond.Broadcast() })
 		}
+		r.waiting++
+		logrus.Infof("waiting: %d", r.waiting)
 		r.cond.Wait()
+		r.waiting--
+		logrus.Infof("waiting: %d", r.waiting)
 		if t != nil {
 			t.Stop()
 		}
@@ -122,5 +127,6 @@ func (r *readBuffer) Close(err error) error {
 		r.err = err
 	}
 	r.cond.Broadcast()
+	logrus.Infof("readbuffer Close() broadcast")
 	return nil
 }
