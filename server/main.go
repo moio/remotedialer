@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	_ "net/http/pprof"
 	"strconv"
 	"strings"
 	"sync"
@@ -128,6 +129,7 @@ func main() {
 	router.HandleFunc("/client/{id}/{scheme}/{host}{path:.*}", func(rw http.ResponseWriter, req *http.Request) {
 		Client(handler, rw, req)
 	})
+	router.Handle("/debug/pprof/goroutine", http.DefaultServeMux)
 
 	fmt.Println("Listening on ", addr)
 	http.ListenAndServe(addr, router)
